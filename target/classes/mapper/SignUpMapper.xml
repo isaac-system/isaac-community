@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+	
+<mapper namespace="com.example.web.sign.mapper.SignUpMapper">
+	<select id="devTypeList" resultType="developer">
+		select * 
+		from TB_DEVELOPER
+	</select>
+	
+	<select id="idCheck" resultType="int" parameterType="string">
+		select count(*) 
+		FROM TB_USERS
+		WHERE user_id = #{user_id}
+	</select>
+	
+	<select id="emailCheck" resultType="int" parameterType="string">
+		select user_validation
+		FROM TB_USERS
+		WHERE user_id = #{user_id}
+	</select>
+	
+	<insert id="userRegister" parameterType="users">
+		insert into TB_USERS  (user_id, dev_id, user_password, user_name, user_tel, 
+		auth, user_nickName, user_email, user_image, created_at, updated_at)
+		values (
+		#{user_id}, #{dev_id},
+		#{user_password}, #{user_name},
+		#{user_tel}, #{auth},
+		#{user_nickName},
+		#{user_email},
+		#{user_image},
+		NOW(), 
+		NOW()
+		)
+	</insert>
+	
+	<update id="updateUserInfo" parameterType="users">
+		update TB_USERS
+			set user_name = #{user_name},
+				user_nickName = #{user_nickName},
+				dev_id = #{dev_id}
+			where user_id = #{user_id}
+	</update>
+	
+	<update id="updateUserPassword" parameterType="users">
+		update tb_users
+			set user_password = #{user_name}
+			where 1=1
+			<if test="user_id!=null">
+			AND	user_id = #{user_id}
+			</if> 
+			<if test="user_email!=null">
+			AND	user_email = #{user_email}
+			</if> 
+	</update>
+	
+	<update id="updateUserImage" parameterType="users">
+		update tb_users
+			set user_image = #{user_image}
+			where user_id = #{user_id}
+	</update>
+	
+	<update id="updateUserValidation" parameterType="users">
+		update tb_users
+			set user_validation = #{user_validation}
+			where user_id = #{user_id}
+	</update>
+	
+	<delete id="deleteUserImageFile" parameterType="int">
+		delete from tb_file
+		where board_no = #{board_no}
+	</delete>
+	
+	<delete id="deleteUser" parameterType="string">
+		delete from tb_users
+			where user_id = #{user_id}
+	</delete>
+</mapper>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+	
+<mapper namespace="com.example.web.main.mapper.TodoMapper">
+
+	<select id="getTodoList" resultType="TodoVO" parameterType="string">
+		SELECT * 
+		FROM tb_todo t
+		WHERE t.user_id = #{user_id}
+	</select>
+	
+	<insert id="insertTodo" parameterType="TodoVO">
+		INSERT INTO tb_todo (user_id, todo_contents, todo_checked) VALUES (#{user_id}, #{todo_contents}, 0);
+	</insert>
+	
+	<update id="updateTodo" parameterType="TodoVO">
+		update tb_todo
+			set todo_contents = #{todo_contents},
+				todo_checked = #{todo_checked}
+			where todo_id = #{todo_id} 
+	</update>
+	
+	<delete id="deleteTodo" parameterType="int">
+		delete from tb_todo
+			where todo_id = #{todo_id}
+	</delete>
+	
+</mapper>

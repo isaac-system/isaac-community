@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+	
+<mapper namespace="com.example.web.board.mapper.HistoryMapper">
+
+	<select id="getBoardHistoryList" resultType="HistoryVO" parameterType="string">
+		SELECT h.*, a.DESCRIPTION, b.BOARD_TITLE, bt.BOARD_TYPE
+		from tb_history h
+		LEFT OUTER JOIN tb_action a
+		ON h.ACTION_ID = a.ACTION_ID
+		LEFT OUTER JOIN tb_board b
+		ON h.BOARD_NO = b.BOARD_NO
+		LEFT OUTER JOIN tb_board_type bt
+		ON b.BOARD_TYPE_ID = bt.BOARD_TYPE_ID
+		WHERE h.USER_ID = #{user_id}
+		AND h.action_id = 1
+		ORDER BY h.created_at DESC
+	</select>
+	
+	<select id="getActivityHistoryList" resultType="HistoryVO" parameterType="string">
+		SELECT h.*, a.DESCRIPTION, b.BOARD_TITLE, bt.BOARD_TYPE
+		from tb_history h
+		LEFT OUTER JOIN tb_action a
+		ON h.ACTION_ID = a.ACTION_ID
+		LEFT OUTER JOIN tb_board b
+		ON h.BOARD_NO = b.BOARD_NO
+		LEFT OUTER JOIN tb_board_type bt
+		ON b.BOARD_TYPE_ID = bt.BOARD_TYPE_ID
+		WHERE h.USER_ID = #{user_id}
+		AND h.action_id != 1
+		ORDER BY h.created_at DESC
+	</select>
+	
+	<insert id="insertBoardHistory" parameterType="HistoryVO">
+		INSERT INTO tb_history (user_id, board_no, action_id) VALUES (#{user_id}, (select IFNULL(max(board_no), 0) from tb_board), #{action_id})
+	</insert>
+	
+	<insert id="insertCommentActivityHistory" parameterType="HistoryVO">
+		INSERT INTO tb_history (user_id, board_no, action_id) VALUES (#{user_id}, #{board_no}, #{action_id})
+	</insert>
+	
+	<insert id="insertLikeActivityHistory" parameterType="HistoryVO">
+		INSERT INTO tb_history (user_id, board_no, action_id) VALUES (#{user_id}, #{board_no}, #{action_id})
+	</insert>
+	
+</mapper>

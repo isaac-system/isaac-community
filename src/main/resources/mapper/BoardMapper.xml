@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+	
+<mapper namespace="com.example.web.board.mapper.BoardMapper">
+
+	<!-- 
+	board_no BIGINT AUTO_INCREMENT PRIMARY KEY,
+	user_id VARCHAR(20) NOT NULL,
+	board_title VARCHAR(20) NOT NULL,
+	board_contents VARCHAR(1000),
+	CREATED_AT DATETIME NOT NULL,
+	UPDATED_AT DATETIME NOT NULL
+	-->
+	
+	<!-- notice_detail crud -->
+	<!-- notice_write 파일 첨부 구현 해야함 -->
+	<!-- ============================================================== -->
+	<select id="getBoardTotalCnt" resultType="int" parameterType="BoardPagingVO">
+		SELECT COUNT(*)
+		FROM tb_board b
+		LEFT OUTER JOIN tb_board_type t
+		ON b.BOARD_TYPE_ID = t.BOARD_TYPE_ID
+		WHERE 1=1
+		AND b.board_type_id = #{board_type_id}
+		<if test="title!=null">
+		AND board_title like CONCAT('%', #{title} , '%')
+		</if> 
+	</select>
+
+	<select id="getBoardList" resultType="BoardVO" parameterType="BoardPagingVO">
+		SELECT n.* FROM (
+			SELECT b.*, t.BOARD_TYPE, (SELECT COUNT(*) FROM tb_comment t WHERE t.BOARD_NO = b.BOARD_NO) commentCnt,
+			(SELECT IFNULL(SUM(likes),0) FROM tb_like l where l.BOARD_NO = b.BOARD_NO) likes,
+			u.user_nickName, u.user_image
+			FROM tb_board b
+			LEFT OUTER JOIN tb_board_type t
+			ON b.BOARD_TYPE_ID = t.BOARD_TYPE_ID
+			LEFT OUTER JOIN tb_users u
+			ON b.user_id = u.user_id
+			WHERE 1=1 
+			<if test="board_type_id!=0">
+			AND b.board_type_id = #{board_type_id}
+			</if>
+			<if test="tags!=null">
+			AND b.tags like CONCAT('%', #{tags} ,'%')
+			</if>
+			<if test="title!=null">
+			AND (b.board_title like CONCAT('%', #{title} ,'%')
+				OR b.address_name like CONCAT('%', #{title} , '%') 
+			)
+			</if>
+			<choose>
+				<when test='sort==null'>
+					ORDER BY created_at DESC
+				</when>
+				<when test='sort.equals("views")'>
+					ORDER BY views DESC
+				</when>
+				<when test='sort.equals("recommend")'>
+					ORDER BY likes DESC
+				</when>
+				<when test='sort.equals("comments")'>
+					ORDER BY commentCnt DESC
+				</when>
+				<when test='sort.equals("lastest")'>
+					ORDER BY created_at DESC
+				</when>
+				<when test='sort.equals("best")'>
+					ORDER BY views DESC, commentCnt DESC, likes DESC, created_at DESC
+				</when>
+				<otherwise>
+					ORDER BY created_at DESC
+				</otherwise>
+			</choose>
+		) n
+		LIMIT #{pageSize, jdbcType=INTEGER} OFFSET #{start, jdbcType=INTEGER}
+	</select>
+	
+	<select id="getTagList" resultType="string" parameterType="string">
+		SELECT TAG_NAME
+		FROM tb_tag
+		WHERE 1=1
+		<if test="tags!=null and !tags.equals('')">
+		AND TAG_NAME like CONCAT('%', #{tags} ,'%')
+		</if>
+	</select>
+	
+	<select id="getTagCount" resultType="TagVO">
+		SELECT c.* FROM (
+			SELECT t.*, (SELECT COUNT(*) FROM tb_board b WHERE b.TAGS LIKE CONCAT('%', t.TAG_NAME , '%') ) tagCnt
+			FROM tb_tag t
+			WHERE 1=1
+			ORDER BY tagCnt DESC
+		) c
+		LIMIT 5 OFFSET 0
+	</select>
+	
+	<select id="getTopWriterCount" resultType="Users" >
+		SELECT c.* FROM (
+			SELECT u.user_id, u.user_image, u.user_nickName ,(SELECT COUNT(*) FROM tb_board b WHERE b.user_id LIKE CONCAT('%', u.user_id ,'%') ) writeCnt
+			FROM tb_users u
+			WHERE 1=1
+			ORDER BY writeCnt DESC
+		) c
+		LIMIT 5 OFFSET 0
+	</select>
+	
+	<select id="getBoard" resultType="BoardVO" parameterType="int">
+		<if test="board_no!=null">
+			SELECT b.*, GROUP_CONCAT( f.file_name ) file_name, GROUP_CONCAT( f.file_original_name ) file_original_name, u.USER_NICKNAME, u.USER_IMAGE
+			FROM tb_board b
+			LEFT OUTER JOIN tb_file f
+			ON b.board_no = f.board_no
+			LEFT OUTER JOIN tb_users u
+			ON b.USER_ID = u.USER_ID
+			WHERE b.board_no = ${board_no}
+		</if>
+	</select>
+	
+	<update id="noticeViewsUp" parameterType="int">
+		update tb_board
+			set views = views + 1
+			where board_no = #{board_no}
+	</update>
+		
+	<insert id="insertBoard" parameterType="BoardVO">
+		<if test="board_title!=null and board_contents!=null">
+			INSERT INTO tb_board(user_id, board_type_id ,board_title, board_contents, VIEWS, TAGS, ADDRESS_NAME,CREATED_AT, UPDATED_AT) 
+			VALUES (#{user_id}, #{board_type_id} ,#{board_title}, #{board_contents}, 0, #{tags}, #{address_name}, NOW(), NOW());
+		</if>
+	</insert>
+	
+	<update id="updateBoard" parameterType="BoardVO">
+		update tb_board
+			set board_title = #{board_title},
+				board_contents = #{board_contents},
+				tags = #{tags},
+				ADDRESS_NAME = #{address_name},
+				UPDATED_AT = NOW()
+			where board_no = #{board_no}
+	</update>
+	
+	<delete id="deleteBoard" parameterType="int">
+		delete from tb_board
+		where board_no = #{board_no}
+	</delete>
+	
+	<select id="getFileList" parameterType="int" resultType="FileVO">
+		select * from tb_file
+		where board_no = #{board_no}
+	</select>
+	
+	<insert id="insertFile" parameterType="FileVO">
+		<if test="file_name!=null">
+			INSERT INTO tb_file (board_no, FILE_PATH, FILE_NAME, FILE_ORIGINAL_NAME , CREATED_AT, UPDATED_AT) 
+			VALUES ((SELECT IFNULL(max(board_no), 0) FROM tb_board) , #{file_path}, #{file_name} , #{file_originalName} ,NOW(), NOW())
+		</if>
+	</insert>
+	
+	<delete id="deleteFile" parameterType="int">
+		delete from tb_file
+		where board_no = #{board_no}
+	</delete>
+	
+	<!-- 좋아요 -->
+	<!-- ============================================================== -->
+	<!-- oracle : nvl(컬럼명, 0) -->
+	<!-- mysql : IFNULL(컬럼명, 0) -->
+	<select id="likeCheck" resultType="int" parameterType="LikeVO">
+		select IFNULL(sum(LIKES),0)
+		from TB_LIKE
+		where board_no = #{board_no}
+		and user_id = #{user_id}
+	</select>
+	
+	<select id="getLikeCount" resultType="int" parameterType="LikeVO">
+		select IFNULL(sum(likes), 0)
+		from TB_LIKE
+		WHERE board_no = #{board_no}
+	</select>
+	
+	<insert id="likeUp" parameterType="LikeVO">
+		INSERT INTO tb_like(board_no , user_id , LIKES) 
+		VALUES (#{board_no}, #{user_id}, 1)
+	</insert>
+	
+	<delete id="deleteLike" parameterType="LikeVO">
+		DELETE FROM TB_LIKE
+		WHERE board_no = #{board_no}  
+		AND user_id = #{user_id}
+	</delete>
+	
+	<insert id="likeDown" parameterType="LikeVO">
+		INSERT INTO tb_like(board_no , user_id , LIKES) 
+		VALUES (#{board_no}, #{user_id}, -1)
+	</insert>
+	<!-- ============================================================== -->
+	
+	<!-- 댓글 -->
+	<!-- ============================================================== -->
+	<!-- 댓글 수 -->
+	<select id="countComment" resultType="int" parameterType="int">
+		select count(*)
+		from tb_comment
+		where board_no = #{board_no}
+	</select>
+	<!-- 댓글 리스트 -->
+	<select id="getCommentList" resultType="CommentVO" parameterType="int">
+		SELECT c.*, (SELECT COUNT(*) FROM tb_comment c2 WHERE c2.PARENT = c.comment_id) commentCount,
+		u.user_nickName, u.user_image
+		FROM tb_comment c
+		LEFT OUTER JOIN tb_users u
+		ON c.user_id = u.user_id
+		where board_no = #{board_no}
+		and c.parent = 0
+		<!-- ORDER BY IF(c.PARENT = 0, c.COMMENT_ID, c.PARENT) DESC -->
+	</select>
+	
+	<!-- 대댓글 리스트 -->
+	<select id="getReCommentList" resultType="CommentVO" parameterType="CommentVO" >
+		select c.*, (SELECT COUNT(*) FROM tb_comment c2 WHERE c2.PARENT = c.comment_id) commentCount,
+		u.user_nickName, u.user_image
+		from tb_comment c
+		LEFT OUTER JOIN tb_users u
+		ON c.user_id = u.user_id
+		where board_no = #{board_no}
+		and parent = #{parent}
+		order by created_at desc
+	</select>
+	
+	<!-- 댓글 쓰기 -->
+	<insert id="insertComment" parameterType="CommentVO">
+		INSERT INTO tb_comment (BOARD_NO, USER_ID, PARENT, DEPTH, COMMENTS, CREATED_AT, UPDATED_AT) 
+		VALUES (#{board_no}, #{user_id}, #{parent}, IF(PARENT = 0, COMMENT_ID, PARENT), #{comments}, NOW(), NOW() )
+	</insert>
+	<!-- 댓글 수정 -->
+	<update id="updateComment" parameterType="CommentVO">
+		UPDATE tb_comment
+		SET comments = #{comments}
+		WHERE board_no = #{board_no}
+		AND user_id = #{user_id}
+	</update>
+	<!-- 댓글 삭제 -->
+	<delete id="deleteComment" parameterType="CommentVO">
+		DELETE FROM tb_comment
+		WHERE board_no = #{board_no}
+		AND comment_id = #{comment_id}
+	</delete>
+	
+	<!-- 대댓글 기능 -->
+	<insert id="insertReComment" parameterType="CommentVO">
+		INSERT INTO TB_COMMENT (board_no, USER_ID, PARENT, COMMENTS, CREATED_AT, UPDATED_AT) 
+		VALUES (#{board_no}, #{user_id}, #{parent},#{comments}, NOW(), NOW())
+	</insert>
+	
+	
+	<!-- ============================================================== -->
+</mapper>
