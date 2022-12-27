@@ -9,7 +9,7 @@
 <meta charset="UTF-8">
 <link rel="stylesheet" type="text/css" href="${path}/a01_comlib/summernote-0.8.18-dist/summernote-lite.min.css">
 <link rel="stylesheet" type="text/css" href="${path}/a01_comlib/bootstrap-tagsinput-latest/dist/bootstrap-tagsinput.css">
-<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=ec0baadd5eb3defbe1a6fef4a3ba1113&libraries=services"></script>
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?"></script>
 <style type="text/css">
 .map_wrap, .map_wrap * {margin:0;padding:0;font-family:'Malgun Gothic',dotum,'돋움',sans-serif;font-size:12px;}
 .map_wrap a, .map_wrap a:hover, .map_wrap a:active{color:#000;text-decoration: none;}
