@@ -139,8 +139,8 @@
 		                
 		                <div class="input-group col justify-content-end align-items-center">
 							<span style="margin-right: 20px"> ${boardPagingVO.curPage}/${boardPagingVO.pageCount} 페이지 </span>
-							<button id="pageMinus" type="button" class="btn btn-light" onclick="javascript:goPage(${boardPagingVO.curPage-1})" disabled="disabled"><i data-feather="arrow-left"></i></button>
-							<button id="pagePlus" type="button" class="btn btn-light" onclick="javascript:goPage(${boardPagingVO.curPage+1})"><i data-feather="arrow-right"></i></button>
+							<button type="button" class="btn btn-light pageMinus" onclick="javascript:goPage(${boardPagingVO.curPage-1})" disabled="disabled"><i data-feather="arrow-left"></i></button>
+							<button type="button" class="btn btn-light pagePlus" onclick="javascript:goPage(${boardPagingVO.curPage+1})"><i data-feather="arrow-right"></i></button>
 						</div>
 					</div>
 				</form>
@@ -210,12 +210,12 @@
 					</ul>
 					
 					<ul class="pagination justify-content-center">
-						<li class="page-item"><a class="page-link" href="javascript:goPage(${boardPagingVO.startBlock})">Previous</a></li>
+						<li class="page-item"><button class="page-link pageMinus" onclick="javascript:goPage(${boardPagingVO.curPage-1})">Previous</button></li>
 							<c:forEach var="cnt" begin="${boardPagingVO.startBlock}" end="${boardPagingVO.endBlock}">
 								<li class="page-item ${boardPagingVO.curPage==cnt ? 'active' : ''}">
 								<a class="page-link" href="javascript:goPage(${cnt})">${cnt}</a></li>
 							</c:forEach>
-						<li class="page-item"><a class="page-link" href="javascript:goPage(${boardPagingVO.endBlock})">Next</a></li>
+						<li class="page-item"><button class="page-link pagePlus" onclick="javascript:goPage(${boardPagingVO.curPage+1})">Next</button></li>
 					</ul>
 					
 				</div>
@@ -257,15 +257,15 @@
 		var curPage = "${boardPagingVO.curPage}"
 		
 		if( curPage == 1 ) {
-			$("#pageMinus").attr("disabled", true)
+			$(".pageMinus").attr("disabled", true)
 		} else {
-			$("#pageMinus").attr("disabled", false)
+			$(".pageMinus").attr("disabled", false)
 		}
 		
 		if( curPage == "${boardPagingVO.endBlock}" ) {
-			$("#pagePlus").attr("disabled", true)
+			$(".pagePlus").attr("disabled", true)
 		} else {
-			$("#pagePlus").attr("disabled", false)
+			$(".pagePlus").attr("disabled", false)
 		}
 		
 		// 선택된 페이지 크기 설정..
